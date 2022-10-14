@@ -1,2 +1,3 @@
-# stat442
-STAT442 related materials
+# Code for evaluating predictive models of the rent data set
+
+
