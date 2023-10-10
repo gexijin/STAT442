@@ -1,15 +1,14 @@
-# A Shiny app for evaluating the performance of 
-# rent prediction models in STAT442@SDSU 2022F
+# A Shiny app for evaluating model performance
 # Deployed at https://sdsucamp.shinyapps.io/rent/
 
 df <- read.csv("model_performance_log.csv")
 df <- subset(df, select = -Area.Locality)
-students <- colnames(df)[-c(1:13)]
-categories <- colnames(df)[3:12]
-
+students <- colnames(df)[-c(1:12)]
+categories <- colnames(df)[3:11]
+df$BHK <- as.character(df$BHK)
 # calculate residues
 res <- df
-res[14:23] <- res[14:23] - df$Rent
+res[13:23] <- res[14:23] - df$Rent
 
 library(ggplot2)
 library(shiny)
@@ -40,7 +39,11 @@ ui <- fluidPage(
               label = "Feel Jittery?",
               value = FALSE
             ),
-            textOutput("pval")
+            textOutput("pval"),
+            h4("SDSU Department of Math & Stat."),
+            h4("Source code at ",
+               a("GitHub", href="https://github.com/gexijin/stat442")
+               )
         ),
 
         # Show a plot of the generated distribution

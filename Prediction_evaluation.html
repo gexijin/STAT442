@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.353">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Xijin Ge">
+
+<title>Evaluation of predictions</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="Prediction_evaluation_files/libs/clipboard/clipboard.min.js"></script>
+<script src="Prediction_evaluation_files/libs/quarto-html/quarto.js"></script>
+<script src="Prediction_evaluation_files/libs/quarto-html/popper.min.js"></script>
+<script src="Prediction_evaluation_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="Prediction_evaluation_files/libs/quarto-html/anchor.min.js"></script>
+<link href="Prediction_evaluation_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="Prediction_evaluation_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="Prediction_evaluation_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="Prediction_evaluation_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="Prediction_evaluation_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Evaluation of predictions</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Xijin Ge </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+</header>
+
+<section id="read-files" class="level2">
+<h2 class="anchored" data-anchor-id="read-files">Read files</h2>
+<p>The files are cleaned to keep only two columns, id and the predictions.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load necessary libraries</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+Attaching package: 'dplyr'</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following objects are masked from 'package:stats':
+
+    filter, lag</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following objects are masked from 'package:base':
+
+    intersect, setdiff, setequal, union</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># List all CSV files in the folder</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>file_paths <span class="ot">&lt;-</span> <span class="fu">list.files</span>(<span class="at">path =</span> <span class="st">"data/predictions"</span>, <span class="at">pattern =</span> <span class="st">"*.csv"</span>, <span class="at">full.names =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Initialize a list to store individual dataframes</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>df_list <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Iterate through each file</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(file_paths)) {</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Read the file into a dataframe</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  temp_df <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(file_paths[i])</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Extract the filename without the ".csv" extension</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>  file_name <span class="ot">&lt;-</span> tools<span class="sc">::</span><span class="fu">file_path_sans_ext</span>(<span class="fu">basename</span>(file_paths[i]))</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Rename the second column</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">colnames</span>(temp_df)[<span class="dv">2</span>] <span class="ot">&lt;-</span> file_name</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Store the dataframe in the list</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>  df_list[[i]] <span class="ot">&lt;-</span> temp_df</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Merge all dataframes by the "id" column</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>merged_df <span class="ot">&lt;-</span> <span class="fu">Reduce</span>(<span class="cf">function</span>(x, y) {</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">merge</span>(x, y, <span class="at">by =</span> <span class="st">"id"</span>, <span class="at">all =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>}, df_list)</span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a><span class="co"># Print the merged dataframe</span></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(merged_df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  id      Abby Adamgosmire        Addy Akin_Mitu Burkhalter     Daria   DeYoung
+1  1  6654.190        2000  4063.57428  7208.543   5635.437  6013.168  5559.983
+2  2  9416.986        7500 7588.084781  7804.698   7967.955  8177.430  8637.214
+3  3 21427.828       23400 30117.39322 35167.498  28512.153 32472.980 33322.448
+4  4  6923.165        6500 6654.740279  6013.974   6037.676  6740.354  6145.523
+5  5 14472.133       13400 14500.59853 15334.362  14176.598 15224.278 15304.298
+6  6  7721.697        7000 7399.056187  7436.747   7674.476  7896.337  7966.902
+  Lucas_Nick    Ternes      Trey      Will
+1   8727.071  5186.288  5503.072  5796.342
+2   7098.692  9166.554  8433.726  8209.042
+3  34186.359 35182.844 31953.163 30015.180
+4   6418.290  5837.288  6132.790  6467.250
+5  15112.547 15561.629 14551.820 15490.125
+6   6831.864  8037.926  7987.693  8013.499</code></pre>
+</div>
+</div>
+<p>You can add options to executable code like this</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>merged_df <span class="ot">&lt;-</span> merged_df[<span class="fu">rowSums</span>(<span class="fu">is.na</span>(merged_df[,<span class="sc">-</span><span class="dv">1</span>])) <span class="sc">!=</span> <span class="fu">ncol</span>(merged_df) <span class="sc">-</span> <span class="dv">1</span>, ]</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(merged_df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 746  12</code></pre>
+</div>
+</div>
+<p><strong>Missing values</strong></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load the ggplot2 library</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Set the 'id' column as row names</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(merged_df) <span class="ot">&lt;-</span> merged_df<span class="sc">$</span>id</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>merged_df<span class="sc">$</span>id <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>merged_df<span class="sc">$</span>Addy <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(merged_df<span class="sc">$</span>Addy)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: NAs introduced by coercion</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate the number of missing values for each column</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>missing_counts <span class="ot">&lt;-</span> <span class="fu">sapply</span>(merged_df, <span class="cf">function</span>(col) <span class="fu">sum</span>(<span class="fu">is.na</span>(col)))</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>missing_data <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">column =</span> <span class="fu">names</span>(missing_counts), <span class="at">missing_values =</span> missing_counts)</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot the missing values using ggplot2 with labels on top</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(missing_data, <span class="fu">aes</span>(<span class="at">x =</span> column, <span class="at">y =</span> missing_values)) <span class="sc">+</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="at">stat =</span> <span class="st">"identity"</span>) <span class="sc">+</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(<span class="fu">aes</span>(<span class="at">label =</span> missing_values), <span class="at">vjust =</span> <span class="sc">-</span><span class="fl">0.5</span>) <span class="sc">+</span>  <span class="co"># This line adds labels on top of the bars</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle =</span> <span class="dv">45</span>, <span class="at">hjust =</span> <span class="dv">1</span>)) <span class="sc">+</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">"Number of Missing Values per Column"</span>) <span class="sc">+</span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">"Column"</span>) <span class="sc">+</span></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">"Number of Missing Values"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Prediction_evaluation_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Impute missing values with the median of each column</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>merged_df[] <span class="ot">&lt;-</span> <span class="fu">lapply</span>(merged_df, <span class="cf">function</span>(col) {</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span>(<span class="fu">is.numeric</span>(col)) {  <span class="co"># Check if the column is numeric</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    col[<span class="fu">is.na</span>(col)] <span class="ot">&lt;-</span> <span class="fu">median</span>(col, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)  <span class="co"># Replace NAs with median of the column</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(col)</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Print the imputed dataframe</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(merged_df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>       Abby Adamgosmire      Addy Akin_Mitu Burkhalter     Daria   DeYoung
+1  6654.190        2000  4063.574  7208.543   5635.437  6013.168  5559.983
+2  9416.986        7500  7588.085  7804.698   7967.955  8177.430  8637.214
+3 21427.828       23400 30117.393 35167.498  28512.153 32472.980 33322.448
+4  6923.165        6500  6654.740  6013.974   6037.676  6740.354  6145.523
+5 14472.133       13400 14500.599 15334.362  14176.598 15224.278 15304.298
+6  7721.697        7000  7399.056  7436.747   7674.476  7896.337  7966.902
+  Lucas_Nick    Ternes      Trey      Will
+1   8727.071  5186.288  5503.072  5796.342
+2   7098.692  9166.554  8433.726  8209.042
+3  34186.359 35182.844 31953.163 30015.180
+4   6418.290  5837.288  6132.790  6467.250
+5  15112.547 15561.629 14551.820 15490.125
+6   6831.864  8037.926  7987.693  8013.499</code></pre>
+</div>
+</div>
+<p><strong>True values</strong></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Read the rent_data_test_original.csv file</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>rent_data <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">"data/rent_data_test_original.csv"</span>)</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Treat the first column as row id</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(rent_data) <span class="ot">&lt;-</span> rent_data[,<span class="dv">1</span>]</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>rent_data <span class="ot">&lt;-</span> rent_data[,<span class="sc">-</span><span class="dv">1</span>]</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Merge with merged_df by row id</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>predictions <span class="ot">&lt;-</span> <span class="fu">merge</span>(merged_df, rent_data, <span class="at">by =</span> <span class="st">"row.names"</span>, <span class="at">all =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Adjust column name from "Row.names" (default from merge function) to "id"</span></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(predictions)[<span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="st">"id"</span></span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Print the predictions dataframe</span></span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(predictions)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      id                 Abby        Adamgosmire          Addy       
+ Length:746         Min.   : 4668   Min.   :  1000   Min.   :  2856  
+ Class :AsIs        1st Qu.:11390   1st Qu.: 13000   1st Qu.: 11273  
+ Mode  :character   Median :15472   Median : 21400   Median : 15253  
+                    Mean   :21118   Mean   : 47035   Mean   : 24046  
+                    3rd Qu.:28733   3rd Qu.: 37000   3rd Qu.: 27079  
+                    Max.   :56913   Max.   :678000   Max.   :158937  
+   Akin_Mitu        Burkhalter         Daria            DeYoung      
+ Min.   :  4894   Min.   :  4728   Min.   :   5066   Min.   :  4859  
+ 1st Qu.: 11572   1st Qu.: 11474   1st Qu.:  11327   1st Qu.: 11443  
+ Median : 16028   Median : 15686   Median :  15217   Median : 15678  
+ Mean   : 30248   Mean   : 32439   Mean   :  44415   Mean   : 32147  
+ 3rd Qu.: 32352   3rd Qu.: 31563   3rd Qu.:  28398   3rd Qu.: 31871  
+ Max.   :362977   Max.   :471865   Max.   :7800742   Max.   :604314  
+   Lucas_Nick         Ternes            Trey             Will       
+ Min.   :  4798   Min.   :  4296   Min.   :  4546   Min.   :  4831  
+ 1st Qu.: 11630   1st Qu.: 11367   1st Qu.: 11382   1st Qu.: 13093  
+ Median : 17860   Median : 15851   Median : 15610   Median : 17353  
+ Mean   : 35100   Mean   : 32735   Mean   : 32510   Mean   : 24776  
+ 3rd Qu.: 36209   3rd Qu.: 31969   3rd Qu.: 32354   3rd Qu.: 30585  
+ Max.   :535546   Max.   :576198   Max.   :617771   Max.   :211656  
+  Posted.On              BHK             Size         Floor          
+ Length:746         Min.   :1.000   Min.   :  10   Length:746        
+ Class :character   1st Qu.:2.000   1st Qu.: 600   Class :character  
+ Mode  :character   Median :2.000   Median : 897   Mode  :character  
+                    Mean   :2.114   Mean   :1002                     
+                    3rd Qu.:3.000   3rd Qu.:1200                     
+                    Max.   :6.000   Max.   :5700                     
+  Area.Type         Area.Locality          City           Furnishing.Status 
+ Length:746         Length:746         Length:746         Length:746        
+ Class :character   Class :character   Class :character   Class :character  
+ Mode  :character   Mode  :character   Mode  :character   Mode  :character  
+                                                                            
+                                                                            
+                                                                            
+ Tenant.Preferred      Bathroom     Point.of.Contact        Rent        
+ Length:746         Min.   :1.000   Length:746         Min.   :   3000  
+ Class :character   1st Qu.:1.000   Class :character   1st Qu.:  10500  
+ Mode  :character   Median :2.000   Mode  :character   Median :  16500  
+                    Mean   :2.019                      Mean   :  34876  
+                    3rd Qu.:2.000                      3rd Qu.:  32375  
+                    Max.   :7.000                      Max.   :1200000  </code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert the 'id' column to integers</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>predictions<span class="sc">$</span>id <span class="ot">&lt;-</span> <span class="fu">as.integer</span>(predictions<span class="sc">$</span>id)</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Sort the dataframe by the 'id' column</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>predictions <span class="ot">&lt;-</span> predictions[<span class="fu">order</span>(predictions<span class="sc">$</span>id), ]</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Treat the 'id' column as row names</span></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(predictions) <span class="ot">&lt;-</span> predictions<span class="sc">$</span>id</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>predictions<span class="sc">$</span>id <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Print the updated predictions dataframe</span></span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(predictions)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>       Abby Adamgosmire      Addy Akin_Mitu Burkhalter     Daria   DeYoung
+1  6654.190        2000  4063.574  7208.543   5635.437  6013.168  5559.983
+2  9416.986        7500  7588.085  7804.698   7967.955  8177.430  8637.214
+3 21427.828       23400 30117.393 35167.498  28512.153 32472.980 33322.448
+4  6923.165        6500  6654.740  6013.974   6037.676  6740.354  6145.523
+5 14472.133       13400 14500.599 15334.362  14176.598 15224.278 15304.298
+6  7721.697        7000  7399.056  7436.747   7674.476  7896.337  7966.902
+  Lucas_Nick    Ternes      Trey      Will Posted.On BHK Size           Floor
+1   8727.071  5186.288  5503.072  5796.342 4/30/2022   1   50      4 out of 5
+2   7098.692  9166.554  8433.726  8209.042  7/8/2022   1  500      2 out of 3
+3  34186.359 35182.844 31953.163 30015.180  7/6/2022   1  450      4 out of 7
+4   6418.290  5837.288  6132.790  6467.250 5/12/2022   1  400      1 out of 2
+5  15112.547 15561.629 14551.820 15490.125  7/6/2022   2 1100 Ground out of 4
+6   6831.864  8037.926  7987.693  8013.499 5/23/2022   1  400      3 out of 4
+    Area.Type                   Area.Locality      City Furnishing.Status
+1  Super Area                        Amberpet Hyderabad       Unfurnished
+2 Carpet Area Hsr Layout Sector 3, HSR Layout Bangalore    Semi-Furnished
+3 Carpet Area                Charkop Sector 6    Mumbai    Semi-Furnished
+4  Super Area                         Meerpet Hyderabad       Unfurnished
+5  Super Area              Nandanam Extension   Chennai    Semi-Furnished
+6  Super Area       Thammenahalli Apartmentge Bangalore    Semi-Furnished
+  Tenant.Preferred Bathroom Point.of.Contact  Rent
+1 Bachelors/Family        1    Contact Owner  4500
+2 Bachelors/Family        1    Contact Owner 15000
+3           Family        2    Contact Agent 22000
+4 Bachelors/Family        1    Contact Owner  6000
+5 Bachelors/Family        2    Contact Owner 30000
+6 Bachelors/Family        1    Contact Owner  6000</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(predictions)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] "Abby"              "Adamgosmire"       "Addy"             
+ [4] "Akin_Mitu"         "Burkhalter"        "Daria"            
+ [7] "DeYoung"           "Lucas_Nick"        "Ternes"           
+[10] "Trey"              "Will"              "Posted.On"        
+[13] "BHK"               "Size"              "Floor"            
+[16] "Area.Type"         "Area.Locality"     "City"             
+[19] "Furnishing.Status" "Tenant.Preferred"  "Bathroom"         
+[22] "Point.of.Contact"  "Rent"             </code></pre>
+</div>
+</div>
+</section>
+<section id="calculate-percent-errors" class="level2">
+<h2 class="anchored" data-anchor-id="calculate-percent-errors"><strong>Calculate percent errors</strong></h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Extract the first ten columns (predicted rents)</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>predictions<span class="sc">$</span>Addy <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(predictions<span class="sc">$</span>Addy)</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>predicted_values <span class="ot">&lt;-</span> predictions[, <span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>]</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate percent error for each prediction</span></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>percent_errors_data <span class="ot">&lt;-</span> <span class="fu">apply</span>(predicted_values, <span class="dv">2</span>, <span class="cf">function</span>(pred_column) {</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">abs</span>(pred_column <span class="sc">-</span> predictions<span class="sc">$</span>Rent) <span class="sc">/</span> predictions<span class="sc">$</span>Rent <span class="sc">*</span> <span class="dv">100</span></span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert the matrix to a data frame</span></span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>percent_errors <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(percent_errors_data)</span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Print the first few rows of the percent_errors dataframe</span></span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(percent_errors)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>       Abby Adamgosmire      Addy  Akin_Mitu Burkhalter    Daria   DeYoung
+1 47.870894   55.555556  9.698349 60.1898533 25.2319374 33.62596 23.555178
+2 37.220095   50.000000 49.412768 47.9686772 46.8803033 45.48380 42.418573
+3  2.600781    6.363636 36.897242 59.8522655 29.6006967 47.60446 51.465673
+4 15.386089    8.333333 10.912338  0.2328994  0.6279272 12.33924  2.425383
+5 51.759557   55.333333 51.664672 48.8854597 52.7446726 49.25241 48.985673
+6 28.694951   16.666667 23.317603 23.9457869 27.9079298 31.60562 32.781700
+  Lucas_Nick    Ternes      Trey
+1  93.934916 15.250846 22.290481
+2  52.675384 38.889642 43.775160
+3  55.392539 59.922020 45.241651
+4   6.971498  2.711863  2.213174
+5  49.624844 48.127903 51.493934
+6  13.864396 33.965429 33.128211</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(percent_errors)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      Abby            Adamgosmire           Addy             Akin_Mitu       
+ Min.   :  0.08214   Min.   :   0.00   Min.   :  0.02436   Min.   :  0.1968  
+ 1st Qu.: 12.13519   1st Qu.:  20.00   1st Qu.: 11.45648   1st Qu.: 11.8619  
+ Median : 25.69718   Median :  45.00   Median : 26.08786   Median : 22.6038  
+ Mean   : 33.19317   Mean   :  83.56   Mean   : 31.46024   Mean   : 31.1967  
+ 3rd Qu.: 45.83338   3rd Qu.:  81.42   3rd Qu.: 44.16052   3rd Qu.: 42.3113  
+ Max.   :264.22594   Max.   :1300.00   Max.   :273.66134   Max.   :310.3780  
+   Burkhalter            Daria             DeYoung           Lucas_Nick      
+ Min.   :  0.05653   Min.   :  0.0152   Min.   :  0.0107   Min.   :  0.0113  
+ 1st Qu.: 11.24634   1st Qu.: 11.2147   1st Qu.: 11.1263   1st Qu.: 12.0601  
+ Median : 22.56528   Median : 24.2149   Median : 23.6056   Median : 25.8219  
+ Mean   : 30.94236   Mean   : 31.6938   Mean   : 32.3485   Mean   : 37.6167  
+ 3rd Qu.: 41.09297   3rd Qu.: 40.7797   3rd Qu.: 41.2228   3rd Qu.: 46.2857  
+ Max.   :280.35908   Max.   :550.0619   Max.   :545.5116   Max.   :695.9395  
+     Ternes            Trey         
+ Min.   :  0.13   Min.   :  0.0108  
+ 1st Qu.: 10.73   1st Qu.: 11.0916  
+ Median : 24.35   Median : 22.6004  
+ Mean   : 32.40   Mean   : 31.8594  
+ 3rd Qu.: 41.03   3rd Qu.: 41.8772  
+ Max.   :573.92   Max.   :503.6789  </code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate the average of percent errors for each column</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>avg_errors <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">colMeans</span>(percent_errors))</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>avg_errors <span class="ot">&lt;-</span> <span class="fu">round</span>(avg_errors, <span class="dv">2</span>)</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span> (avg_errors)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> Burkhalter   Akin_Mitu        Addy       Daria        Trey     DeYoung 
+      30.94       31.20       31.46       31.69       31.86       32.35 
+     Ternes        Abby  Lucas_Nick Adamgosmire 
+      32.40       33.19       37.62       83.56 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(avg_errors)</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>df<span class="sc">$</span>name <span class="ot">&lt;-</span> <span class="fu">names</span>(avg_errors)</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>df<span class="sc">$</span>name[<span class="dv">3</span>] <span class="ot">&lt;-</span> <span class="st">"Addy: linear regression, 6"</span></span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>df<span class="sc">$</span>name[<span class="dv">5</span>] <span class="ot">&lt;-</span> <span class="st">"Trey: linear regression, 10"</span></span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>df<span class="sc">$</span>name[<span class="dv">8</span>] <span class="ot">&lt;-</span> <span class="st">"Abby: Random Forest, 6"</span></span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>df<span class="sc">$</span>name[<span class="dv">9</span>] <span class="ot">&lt;-</span> <span class="st">"Lucas&amp;Nick: Random Forest, 8"</span></span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a><span class="co"># preserve the order in plot</span></span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a>df<span class="sc">$</span>name <span class="ot">&lt;-</span> <span class="fu">factor</span>(df<span class="sc">$</span>name, <span class="at">levels =</span> <span class="fu">rev</span>(df<span class="sc">$</span>name))</span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(df, <span class="fu">aes</span>(<span class="at">x =</span> name, <span class="at">y =</span> avg_errors)) <span class="sc">+</span></span>
+<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_segment</span>(</span>
+<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">aes</span>(<span class="at">x =</span> name, <span class="at">xend =</span> name, <span class="at">y =</span> <span class="dv">0</span>, <span class="at">yend =</span> avg_errors), </span>
+<span id="cb26-15"><a href="#cb26-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">color =</span> <span class="st">"gray"</span>, </span>
+<span id="cb26-16"><a href="#cb26-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">lwd =</span> <span class="dv">2</span></span>
+<span id="cb26-17"><a href="#cb26-17" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb26-18"><a href="#cb26-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(</span>
+<span id="cb26-19"><a href="#cb26-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">size =</span> <span class="dv">4</span>,</span>
+<span id="cb26-20"><a href="#cb26-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">pch =</span> <span class="dv">21</span>, </span>
+<span id="cb26-21"><a href="#cb26-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">bg =</span> <span class="st">"red"</span>, </span>
+<span id="cb26-22"><a href="#cb26-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">col =</span> <span class="st">"red"</span></span>
+<span id="cb26-23"><a href="#cb26-23" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb26-24"><a href="#cb26-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(</span>
+<span id="cb26-25"><a href="#cb26-25" aria-hidden="true" tabindex="-1"></a>    <span class="fu">aes</span>(<span class="at">label =</span> avg_errors), </span>
+<span id="cb26-26"><a href="#cb26-26" aria-hidden="true" tabindex="-1"></a>    <span class="at">color =</span> <span class="st">"blue"</span>, </span>
+<span id="cb26-27"><a href="#cb26-27" aria-hidden="true" tabindex="-1"></a>    <span class="at">size =</span> <span class="dv">3</span>, </span>
+<span id="cb26-28"><a href="#cb26-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">nudge_y =</span> .<span class="dv">02</span>,</span>
+<span id="cb26-29"><a href="#cb26-29" aria-hidden="true" tabindex="-1"></a>    <span class="at">nudge_x =</span> <span class="fl">0.5</span></span>
+<span id="cb26-30"><a href="#cb26-30" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb26-31"><a href="#cb26-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
+<span id="cb26-32"><a href="#cb26-32" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.text.x=</span><span class="fu">element_blank</span>(),</span>
+<span id="cb26-33"><a href="#cb26-33" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.ticks.x=</span><span class="fu">element_blank</span>(),</span>
+<span id="cb26-34"><a href="#cb26-34" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.title.y =</span> <span class="fu">element_blank</span>()</span>
+<span id="cb26-35"><a href="#cb26-35" aria-hidden="true" tabindex="-1"></a>  )<span class="sc">+</span></span>
+<span id="cb26-36"><a href="#cb26-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Prediction_evaluation_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(predictions, <span class="st">"predicted_true.csv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<section id="addys-model" class="level3">
+<h3 class="anchored" data-anchor-id="addys-model">Addy’s model</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>fit4 <span class="ot">&lt;-</span> <span class="fu">lm</span>(lRent <span class="sc">~</span> lTotal_Floors <span class="sc">+</span> lBHK_Bath_Size <span class="sc">+</span> </span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>            Floor_Ratio <span class="sc">+</span> Mumbai <span class="sc">+</span> </span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>            Agent_Contact <span class="sc">+</span> Furnished,</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>            <span class="at">data =</span> without_outliers)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="treys-model" class="level3">
+<h3 class="anchored" data-anchor-id="treys-model">Trey’s model</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">lm</span>(Log_Rent <span class="sc">~</span> BHK <span class="sc">+</span> Size <span class="sc">+</span> Bathroom <span class="sc">+</span> Floor_Max <span class="sc">+</span> <span class="st">`</span><span class="at">Area Type</span><span class="st">`</span> <span class="sc">+</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a><span class="st">`</span><span class="at">Furnishing Status</span><span class="st">`</span> <span class="sc">+</span> <span class="st">`</span><span class="at">Point of Contact</span><span class="st">`</span> <span class="sc">+</span> <span class="st">`</span><span class="at">Tenant Preferred</span><span class="st">`</span> <span class="sc">+</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>Floor_Ratio <span class="sc">+</span> City, Linear_Rent)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="abbys-model" class="level3">
+<h3 class="anchored" data-anchor-id="abbys-model">Abby’s model</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>rf_defaults <span class="ot">&lt;-</span> <span class="fu">rand_forest</span>(<span class="at">mode =</span> <span class="st">"regression"</span>)</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>preds <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Size"</span>, </span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>           <span class="st">"City"</span>, </span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>           <span class="st">"Tenant.Preferred"</span>, </span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>           <span class="st">"Furnishing.Status"</span>, </span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>           <span class="st">"BHK"</span>, </span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>           <span class="st">"Floor_Ratio"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="lucas-nicks-model" class="level3">
+<h3 class="anchored" data-anchor-id="lucas-nicks-model">Lucas &amp; Nick’s model</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>final_model <span class="ot">&lt;-</span> <span class="fu">randomForest</span>(Rent <span class="sc">~</span>  Size </span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>                            <span class="sc">+</span> Bathroom <span class="sc">+</span> TotalLevels </span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>                            <span class="sc">+</span> CityMumbai <span class="sc">+</span> CityDelhi <span class="sc">+</span> Point.o.ContactContact_Agent</span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>                            <span class="sc">+</span> Area.per.Amenity <span class="sc">+</span> Area.TypeCarpet_Area , </span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>                            <span class="at">data =</span> train_data, <span class="at">ntrees =</span> <span class="dv">160</span>, <span class="at">mtry =</span> <span class="dv">7</span>, </span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>                            <span class="at">nodesize =</span> <span class="dv">6</span>, <span class="at">localImp =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>

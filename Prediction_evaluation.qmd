@@ -1,0 +1,249 @@
+---
+title: "Evaluation of predictions"
+author: "Xijin Ge"
+format: html
+editor: visual
+---
+
+## Read files
+
+The files are cleaned to keep only two columns, id and the predictions.
+
+```{r}
+# Load necessary libraries
+library(dplyr)
+
+# List all CSV files in the folder
+file_paths <- list.files(path = "data/predictions", pattern = "*.csv", full.names = TRUE)
+
+# Initialize a list to store individual dataframes
+df_list <- list()
+
+# Iterate through each file
+for (i in 1:length(file_paths)) {
+  # Read the file into a dataframe
+  temp_df <- read.csv(file_paths[i])
+  
+  # Extract the filename without the ".csv" extension
+  file_name <- tools::file_path_sans_ext(basename(file_paths[i]))
+  
+  # Rename the second column
+  colnames(temp_df)[2] <- file_name
+  
+  # Store the dataframe in the list
+  df_list[[i]] <- temp_df
+}
+
+# Merge all dataframes by the "id" column
+merged_df <- Reduce(function(x, y) {
+  merge(x, y, by = "id", all = TRUE)
+}, df_list)
+
+# Print the merged dataframe
+head(merged_df)
+
+```
+
+You can add options to executable code like this
+
+```{r}
+merged_df <- merged_df[rowSums(is.na(merged_df[,-1])) != ncol(merged_df) - 1, ]
+dim(merged_df)
+```
+
+**Missing values**
+
+```{r}
+# Load the ggplot2 library
+library(ggplot2)
+
+# Set the 'id' column as row names
+rownames(merged_df) <- merged_df$id
+merged_df$id <- NULL
+
+merged_df$Addy <- as.numeric(merged_df$Addy)
+
+# Calculate the number of missing values for each column
+missing_counts <- sapply(merged_df, function(col) sum(is.na(col)))
+missing_data <- data.frame(column = names(missing_counts), missing_values = missing_counts)
+
+# Plot the missing values using ggplot2 with labels on top
+ggplot(missing_data, aes(x = column, y = missing_values)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = missing_values), vjust = -0.5) +  # This line adds labels on top of the bars
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  ggtitle("Number of Missing Values per Column") +
+  xlab("Column") +
+  ylab("Number of Missing Values")
+
+```
+
+```{r}
+# Impute missing values with the median of each column
+merged_df[] <- lapply(merged_df, function(col) {
+  if(is.numeric(col)) {  # Check if the column is numeric
+    col[is.na(col)] <- median(col, na.rm = TRUE)  # Replace NAs with median of the column
+  }
+  return(col)
+})
+
+# Print the imputed dataframe
+head(merged_df)
+
+```
+
+**True values**
+
+```{r}
+# Read the rent_data_test_original.csv file
+rent_data <- read.csv("data/rent_data_test_original.csv")
+
+# Treat the first column as row id
+rownames(rent_data) <- rent_data[,1]
+rent_data <- rent_data[,-1]
+
+# Merge with merged_df by row id
+predictions <- merge(merged_df, rent_data, by = "row.names", all = TRUE)
+
+# Adjust column name from "Row.names" (default from merge function) to "id"
+colnames(predictions)[1] <- "id"
+
+# Print the predictions dataframe
+summary(predictions)
+
+```
+
+```{r}
+# Convert the 'id' column to integers
+predictions$id <- as.integer(predictions$id)
+
+# Sort the dataframe by the 'id' column
+predictions <- predictions[order(predictions$id), ]
+
+# Treat the 'id' column as row names
+rownames(predictions) <- predictions$id
+predictions$id <- NULL
+
+# Print the updated predictions dataframe
+head(predictions)
+colnames(predictions)
+
+```
+
+## **Calculate percent errors**
+
+```{r}
+# Extract the first ten columns (predicted rents)
+predictions$Addy <- as.numeric(predictions$Addy)
+predicted_values <- predictions[, 1:10]
+
+# Calculate percent error for each prediction
+percent_errors_data <- apply(predicted_values, 2, function(pred_column) {
+  abs(pred_column - predictions$Rent) / predictions$Rent * 100
+})
+
+# Convert the matrix to a data frame
+percent_errors <- as.data.frame(percent_errors_data)
+
+# Print the first few rows of the percent_errors dataframe
+head(percent_errors)
+
+```
+
+```{r}
+summary(percent_errors)
+```
+
+```{r}
+
+# Calculate the average of percent errors for each column
+avg_errors <- sort(colMeans(percent_errors))
+
+avg_errors <- round(avg_errors, 2)
+
+print (avg_errors)
+df <- as.data.frame(avg_errors)
+df$name <- names(avg_errors)
+
+df$name[3] <- "Addy: linear regression, 6"
+df$name[5] <- "Trey: linear regression, 10"
+df$name[8] <- "Abby: Random Forest, 6"
+df$name[9] <- "Lucas&Nick: Random Forest, 8"
+
+# preserve the order in plot
+df$name <- factor(df$name, levels = rev(df$name))
+library(ggplot2)
+ggplot(df, aes(x = name, y = avg_errors)) +
+  geom_segment(
+    aes(x = name, xend = name, y = 0, yend = avg_errors), 
+    color = "gray", 
+    lwd = 2
+  ) +
+  geom_point(
+    size = 4,
+    pch = 21, 
+    bg = "red", 
+    col = "red"
+  ) +
+  geom_text(
+    aes(label = avg_errors), 
+    color = "blue", 
+    size = 3, 
+    nudge_y = .02,
+    nudge_x = 0.5
+  ) +
+  theme(
+    axis.text.x=element_blank(),
+    axis.ticks.x=element_blank(),
+    axis.title.y = element_blank()
+  )+
+  coord_flip()
+
+```
+
+```{r}
+write.csv(predictions, "predicted_true.csv")
+```
+
+### Addy's model
+
+```{r, eval=FALSE}
+fit4 <- lm(lRent ~ lTotal_Floors + lBHK_Bath_Size + 
+            Floor_Ratio + Mumbai + 
+            Agent_Contact + Furnished,
+            data = without_outliers)
+```
+
+### Trey's model
+
+```{r, eval=FALSE}
+
+fit <- lm(Log_Rent ~ BHK + Size + Bathroom + Floor_Max + `Area Type` +
+`Furnishing Status` + `Point of Contact` + `Tenant Preferred` +
+Floor_Ratio + City, Linear_Rent)
+```
+
+### Abby's model
+
+```{r, eval=FALSE}
+rf_defaults <- rand_forest(mode = "regression")
+preds <- c("Size", 
+           "City", 
+           "Tenant.Preferred", 
+           "Furnishing.Status", 
+           "BHK", 
+           "Floor_Ratio")
+```
+
+### Lucas & Nick's model
+
+```{r, eval=FALSE}
+
+final_model <- randomForest(Rent ~  Size 
+                            + Bathroom + TotalLevels 
+                            + CityMumbai + CityDelhi + Point.o.ContactContact_Agent
+                            + Area.per.Amenity + Area.TypeCarpet_Area , 
+                            data = train_data, ntrees = 160, mtry = 7, 
+                            nodesize = 6, localImp = TRUE)
+
+```
