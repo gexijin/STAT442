@@ -49,8 +49,7 @@ ui <- fluidPage(
         label = "Feel Jittery?",
         value = FALSE
       ),
-      textOutput("pval"),
-      h4("SDSU Department of Math & Stat."),
+      textOutput("pval"), 
       h4(
         "Source code at ",
         a("GitHub", href = "https://github.com/gexijin/stat442")

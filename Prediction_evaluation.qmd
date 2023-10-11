@@ -137,7 +137,7 @@ colnames(predictions)
 ```{r}
 # Extract the first ten columns (predicted rents)
 predictions$Addy <- as.numeric(predictions$Addy)
-predicted_values <- predictions[, 1:10]
+predicted_values <- predictions[, 1:11]
 
 # Calculate percent error for each prediction
 percent_errors_data <- apply(predicted_values, 2, function(pred_column) {
@@ -170,7 +170,8 @@ df$name <- names(avg_errors)
 df$name[3] <- "Addy: linear regression, 6"
 df$name[5] <- "Trey: linear regression, 10"
 df$name[8] <- "Abby: Random Forest, 6"
-df$name[9] <- "Lucas&Nick: Random Forest, 8"
+df$name[10] <- "Lucas&Nick: Random Forest, 8"
+df$name[9] <- "Will: Linear regression, 7"
 
 # preserve the order in plot
 df$name <- factor(df$name, levels = rev(df$name))
@@ -192,7 +193,7 @@ ggplot(df, aes(x = name, y = avg_errors)) +
     color = "blue", 
     size = 3, 
     nudge_y = .02,
-    nudge_x = 0.5
+    nudge_x = 0.4
   ) +
   theme(
     axis.text.x=element_blank(),
